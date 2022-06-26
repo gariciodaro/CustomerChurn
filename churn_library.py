@@ -1,64 +1,153 @@
-# library doc string
+"""
+Helper function of churn client machine learning project.
 
+@author: gari.ciodaro.guerra
+@date: 26-06-2022
+"""
 
 # import libraries
 import os
+import pandas as pd
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+
+# Script configuration
+mpl.style.use(['dark_background'])
 os.environ['QT_QPA_PLATFORM']='offscreen'
 
 
 
-def import_data(pth):
-    '''
+def import_data(pth_csv, delimiter, has_index_column, is_target_required):
+    """
     returns dataframe for the csv found at pth
-
-    input:
-            pth: a path to the csv
-    output:
-            df: pandas dataframe
-    '''	
-	pass
-
+    Parameters
+    ----------
+        pth_csv: (str) a path to the csv
+        delimiter: (str) valid delimiter for csv.
+        has_index_column: (boolean).
+        is_target_required: (boolean). If true, Attrition_Flag 
+        feature will be used to compute target as Churn.
+    Returns
+    ----------
+        df: (pandas.dataframe).
+    """
+    loaded_df = pd.read_csv(
+        pth_csv, 
+        delimiter= delimiter, 
+        index_col= 0 if has_index_column else None)
+    if is_target_required:
+        loaded_df['Churn'] = loaded_df['Attrition_Flag'].apply(
+            lambda val: 0 if val == "Existing Customer" else 1)
+    return loaded_df
 
 def perform_eda(df):
-    '''
+    """
     perform eda on df and save figures to images folder
-    input:
-            df: pandas dataframe
+    Parameters
+    ----------
+        df: (pandas.dataframe)
+    """
+    # Setup constant
+    sns.color_palette("Reds", as_cmap=True)
+    LABEL_DICT= {0:'Client', 1: 'Churn'} 
+    COLOR_PALLETTE= sns.color_palette("Reds", 5)
+    PATH_STORE_OUTPUT= './images/eda/{}'
+    FIGURE_SIZE_TUPLE= (15, 7)
 
-    output:
-            None
-    '''
-	pass
+    # Get counts per label in churn and marital status
+    df_churn = df.Churn.map(LABEL_DICT).value_counts()
+    df_marital_status = df.Marital_Status.value_counts()
+
+    # Get bar and pie plot for churn and marital status features
+    for data, feature in zip([df_churn, df_marital_status], ['churn', 'marital_status']):
+        fig  =  plt.figure(figsize= FIGURE_SIZE_TUPLE)
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+
+        data.plot(
+            kind='bar', 
+            ax= ax1,
+            color=COLOR_PALLETTE)
+        data.plot(
+            kind='pie',
+            ax= ax2, 
+            autopct='%1.1f%%',
+            shadow=True,
+            colors=COLOR_PALLETTE)
+        plt.suptitle(feature.replace('_', ' ')+ ' Distribution')
+        plt.savefig(PATH_STORE_OUTPUT.format(f'{feature}_distribution.png'))
+
+    # Get histogram plot of age feature.
+    fig  =  plt.figure(figsize= FIGURE_SIZE_TUPLE)
+    df.Customer_Age.plot(kind='hist', color= COLOR_PALLETTE[-1])
+    plt.suptitle('Age Distribution.')
+    plt.xlabel('Years')
+    plt.savefig(PATH_STORE_OUTPUT.format('age_distribution.png'))
+
+    # Get distribution plot of Total_Trans_Ct feature
+    plt.figure(figsize= FIGURE_SIZE_TUPLE) 
+    sns.histplot(
+        df.Total_Trans_Ct, 
+        stat='density', 
+        kde=True,
+        color= COLOR_PALLETTE[-1])
+    plt.savefig(PATH_STORE_OUTPUT.format('total_trans_ct.png'))
+
+    # Get pairwise correlation plot.
+    plt.figure(figsize= FIGURE_SIZE_TUPLE) 
+    sns.heatmap(df.corr(), annot=False, linewidths = 2)
+    plt.savefig(PATH_STORE_OUTPUT.format('correlation_matrix.png'))
 
 
-def encoder_helper(df, category_lst, response):
-    '''
-    helper function to turn each categorical column into a new column with
-    propotion of churn for each category - associated with cell 15 from the notebook
 
-    input:
-            df: pandas dataframe
-            category_lst: list of columns that contain categorical features
-            response: string of response name [optional argument that could be used for naming variables or index y column]
-
-    output:
-            df: pandas dataframe with new columns for
-    '''
-    pass
+def encoder_helper(df, category_list):
+    """
+    Target enconding of categorical features.
+    Parameters
+    ----------
+        df: (pandas.dataframe).
+        category_list: (list) list of categorical columns.
+    Returns
+    ----------
+        df: pandas dataframe with new columns for
+    """
+    for each_category in category_list:
+        # Create a dictionry that contains the mean Churn per label
+        # within a given category
+        holder_dictionary = df.groupby(each_category).mean()['Churn'].to_dict()
+        # Target encode. Store on column with sufix '_Churn'
+        # Modification happens in place. The reference dataframe change.
+        df[each_category + '_Churn'] = df[each_category].map(holder_dictionary)
 
 
 def perform_feature_engineering(df, response):
-    '''
-    input:
-              df: pandas dataframe
-              response: string of response name [optional argument that could be used for naming variables or index y column]
+    """Select columns to learn from, split input data into training
+    and testing.
+    Parameters
+    ----------
+        df: pandas dataframe
+    Returns
+    ----------
+        X_train: (pandas.series) train features
+        X_test:  (pandas.series) train features
+        y_train:  (pandas.series) train target
+        y_test:  (pandas.series) train target
+    """
+    keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
+             'Total_Relationship_Count', 'Months_Inactive_12_mon',
+             'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
+             'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
+             'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
+             'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn', 
+             'Income_Category_Churn', 'Card_Category_Churn']
+    X = df[keep_cols]
+    y = df['Churn']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
+    return X_train, X_test, y_train, y_test
 
-    output:
-              X_train: X training data
-              X_test: X testing data
-              y_train: y training data
-              y_test: y testing data
-    '''
+
 
 def classification_report_image(y_train,
                                 y_test,
