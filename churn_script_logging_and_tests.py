@@ -9,42 +9,35 @@ import os
 import glob
 import logging
 import pytest
-from churn_library import import_data, perform_eda, encoder_helper, perform_feature_engineering
+from churn_library import (
+    import_data, 
+    perform_eda, 
+    encoder_helper, 
+    perform_feature_engineering )
+from constants import (
+    DATA_FILE,
+    EDA_IMAGES_PATH, 
+    LOG_FILE,
+    EXPECTED_IMAGES_EDA_SET)
 #import churn_library_solution as cls
 
 # Empty folders for testing.
-files = glob.glob('./images/eda/*')
+files = glob.glob(EDA_IMAGES_PATH+'*')
 for file in files:
     os.remove(file)
 
 # Configuring logs
 logging.basicConfig(
-    filename='./logs/churn_library.log',
+    filename= LOG_FILE,
     level = logging.INFO,
     filemode='w',
     format='%(name)s - %(levelname)s - %(message)s')
 
-TESTING_PATHS_CSV  = ["./data/bank_data.csv"]
-
-EXPECTED_FILES_SET = {
-                'churn_distribution.png', 
-                'marital_status_distribution.png',
-                'age_distribution.png',
-                'total_trans_ct.png',
-                'correlation_matrix.png'}
-
-@pytest.fixture(
-    scope="module",
-    params=TESTING_PATHS_CSV)
-def path(request):
-  value = request.param
-  yield  value
-
-def test_import_data(path):
+def test_import_data():
     """Test for loading correclty input data"""
     try:
         df = import_data(
-            pth_csv= path, 
+            pth_csv= DATA_FILE, 
             delimiter=',', 
             has_index_column= True, 
             is_target_required= True)
@@ -61,11 +54,11 @@ def test_import_data(path):
         logging.error("Testing import_data: The file doesn't appear to have rows and columns")
         raise err
 
-def test_perform_eda():
+def test_perform_eda(df):
     try:
-        perform_eda(pytest.test_data_df)
+        perform_eda(df)
         actual_files_set = set(os.listdir('./images/eda'))
-        difference_set = EXPECTED_FILES_SET - actual_files_set
+        difference_set = EXPECTED_IMAGES_EDA_SET - actual_files_set
         assert len(difference_set)==0
         logging.info("Testing perform_eda: SUCCESS")
     except AssertionError as err:
@@ -73,10 +66,8 @@ def test_perform_eda():
         raise err
 
 
-
-
 if __name__ == "__main__":
-    df = test_import_data(TESTING_PATHS_CSV[0])
+    df = test_import_data()
     test_perform_eda(df)
     #test_import_data(TESTING_PATHS_CSV[1])
     #test_import_data("./data/bx.csv")

@@ -1,2 +1,2 @@
 root - INFO - Testing import_data: SUCCESS
-root - ERROR - Testing import_data: The file wasn't found
+root - INFO - Testing perform_eda: SUCCESS

@@ -12,12 +12,19 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
+from constants import (
+    PLOTS_STYLE, 
+    DATA_FILE,
+    EDA_IMAGES_PATH, 
+    LOG_FILE,
+    EXPECTED_IMAGES_EDA_SET,
+    LABEL_DICT,
+    COLOR_PALLETTE,
+    FIGURE_SIZE_TUPLE)
 
 # Script configuration
-mpl.style.use(['dark_background'])
-os.environ['QT_QPA_PLATFORM']='offscreen'
-
-
+mpl.style.use([PLOTS_STYLE])
+#os.environ['QT_QPA_PLATFORM']='offscreen'
 
 def import_data(pth_csv, delimiter, has_index_column, is_target_required):
     """
@@ -50,11 +57,7 @@ def perform_eda(df):
         df: (pandas.dataframe)
     """
     # Setup constant
-    sns.color_palette("Reds", as_cmap=True)
-    LABEL_DICT= {0:'Client', 1: 'Churn'} 
-    COLOR_PALLETTE= sns.color_palette("Reds", 5)
-    PATH_STORE_OUTPUT= './images/eda/{}'
-    FIGURE_SIZE_TUPLE= (15, 7)
+    
 
     # Get counts per label in churn and marital status
     df_churn = df.Churn.map(LABEL_DICT).value_counts()
@@ -77,14 +80,14 @@ def perform_eda(df):
             shadow=True,
             colors=COLOR_PALLETTE)
         plt.suptitle(feature.replace('_', ' ')+ ' Distribution')
-        plt.savefig(PATH_STORE_OUTPUT.format(f'{feature}_distribution.png'))
+        plt.savefig(EDA_IMAGES_PATH + feature + '_distribution.png')
 
     # Get histogram plot of age feature.
     fig  =  plt.figure(figsize= FIGURE_SIZE_TUPLE)
     df.Customer_Age.plot(kind='hist', color= COLOR_PALLETTE[-1])
     plt.suptitle('Age Distribution.')
     plt.xlabel('Years')
-    plt.savefig(PATH_STORE_OUTPUT.format('age_distribution.png'))
+    plt.savefig(EDA_IMAGES_PATH + 'age_distribution.png')
 
     # Get distribution plot of Total_Trans_Ct feature
     plt.figure(figsize= FIGURE_SIZE_TUPLE) 
@@ -93,12 +96,12 @@ def perform_eda(df):
         stat='density', 
         kde=True,
         color= COLOR_PALLETTE[-1])
-    plt.savefig(PATH_STORE_OUTPUT.format('total_trans_ct.png'))
+    plt.savefig(EDA_IMAGES_PATH + 'total_trans_ct.png')
 
     # Get pairwise correlation plot.
     plt.figure(figsize= FIGURE_SIZE_TUPLE) 
     sns.heatmap(df.corr(), annot=False, linewidths = 2)
-    plt.savefig(PATH_STORE_OUTPUT.format('correlation_matrix.png'))
+    plt.savefig(EDA_IMAGES_PATH + 'correlation_matrix.png')
 
 
 
@@ -135,14 +138,14 @@ def perform_feature_engineering(df, response):
         y_train:  (pandas.series) train target
         y_test:  (pandas.series) train target
     """
-    keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
+    REQUIRED_FEATURES = ['Customer_Age', 'Dependent_count', 'Months_on_book',
              'Total_Relationship_Count', 'Months_Inactive_12_mon',
              'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
              'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
              'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
              'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn', 
              'Income_Category_Churn', 'Card_Category_Churn']
-    X = df[keep_cols]
+    X = df[REQUIRED_FEATURES]
     y = df['Churn']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
     return X_train, X_test, y_train, y_test
