@@ -1,2 +1,12 @@
 root - INFO - Testing import_data: SUCCESS
 root - INFO - Testing perform_eda: SUCCESS
+root - INFO - Testing encoder_helper: SUCCESS
+root - INFO - 
+        Testing perform_feature_engineering: 
+        input df shape (10127, 27)
+        Expected number of features 19
+        X_train shape (7088, 19)
+        X_test shape (3039, 19)
+        y_train shape (7088,)
+        y_test shape (3039,)
+root - INFO - Testing perform_feature_engineering: SUCCESS

@@ -20,7 +20,9 @@ from constants import (
     EXPECTED_IMAGES_EDA_SET,
     LABEL_DICT,
     COLOR_PALLETTE,
-    FIGURE_SIZE_TUPLE)
+    FIGURE_SIZE_TUPLE,
+    CATEGORICAL_FEATURES,
+    PROCESSED_FEATURES)
 
 # Script configuration
 mpl.style.use([PLOTS_STYLE])
@@ -105,18 +107,15 @@ def perform_eda(df):
 
 
 
-def encoder_helper(df, category_list):
+def encoder_helper(df):
     """
     Target enconding of categorical features.
     Parameters
     ----------
         df: (pandas.dataframe).
         category_list: (list) list of categorical columns.
-    Returns
-    ----------
-        df: pandas dataframe with new columns for
     """
-    for each_category in category_list:
+    for each_category in CATEGORICAL_FEATURES:
         # Create a dictionry that contains the mean Churn per label
         # within a given category
         holder_dictionary = df.groupby(each_category).mean()['Churn'].to_dict()
@@ -125,7 +124,7 @@ def encoder_helper(df, category_list):
         df[each_category + '_Churn'] = df[each_category].map(holder_dictionary)
 
 
-def perform_feature_engineering(df, response):
+def perform_feature_engineering(df):
     """Select columns to learn from, split input data into training
     and testing.
     Parameters
@@ -138,14 +137,7 @@ def perform_feature_engineering(df, response):
         y_train:  (pandas.series) train target
         y_test:  (pandas.series) train target
     """
-    REQUIRED_FEATURES = ['Customer_Age', 'Dependent_count', 'Months_on_book',
-             'Total_Relationship_Count', 'Months_Inactive_12_mon',
-             'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
-             'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
-             'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
-             'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn', 
-             'Income_Category_Churn', 'Card_Category_Churn']
-    X = df[REQUIRED_FEATURES]
+    X = df[PROCESSED_FEATURES]
     y = df['Churn']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
     return X_train, X_test, y_train, y_test
