@@ -45,13 +45,13 @@ NUMERICAL_FEATURES = [
 ]
 ```
 ### Sample marital status distribution (EDA):
-![marital status distribution sample"](images\marital_status_distribution_sample.png "marital status distribution sample")
+![marital status distribution sample"](images/marital_status_distribution_sample.png "marital status distribution sample")
 
 ### Sample classification report:
-![classification report"](images\classification_report_sample.png "classification report")
+![classification report"](images/classification_report_sample.png "classification report")
 
 ### Sample feature_importance_sample:
-![feature importance sample"](images\feature_importance_sample.png "feature importance sample")
+![feature importance sample"](images/feature_importance_sample.png "feature importance sample")
 
 
 
