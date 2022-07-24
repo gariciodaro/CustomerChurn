@@ -8,32 +8,31 @@ root - INFO -
         total_trans_ct.png, marital_status_distribution.png, correlation_matrix.png, age_distribution.png, churn_distribution.png
 root - INFO - Testing perform_eda: END
 root - INFO - Testing encoder_helper: START
-root - INFO - Testing encoder_helper: SUCCESS
 root - INFO - 
-        Testing encoder_helper: 
+        Testing encoder_helper: SUCCESS.
         features encoded. Gender_Churn, Education_Level_Churn, Marital_Status_Churn, Income_Category_Churn, Card_Category_Churn
         
 root - INFO - Testing encoder_helper: END
 root - INFO - Testing perform_feature_engineering: START
 root - INFO - 
-        Testing perform_feature_engineering: 
-        input df shape (10127, 27)
+        Testing perform_feature_engineering:
+        input data shape (10127, 27)
         Expected number of features 19
-        X_train shape (7088, 19)
-        X_test shape (3039, 19)
-        y_train shape (7088,)
-        y_test shape (3039,)
+        features_train shape (7088, 19)
+        features_test shape (3039, 19)
+        target_train shape (7088,)
+        target_test shape (3039,)
 root - INFO - Testing perform_feature_engineering: SUCCESS
 root - INFO - Testing perform_feature_engineering: END
 root - INFO - Testing train_models: START
 root - INFO - 
-        Testing test_train_models: 
-        models were created in ./models/. 
-        RandomForest.pkl, LogisticRegression.pkl
+        Testing test_train_models:
+        models were created in ./models/.
+        LogisticRegression.pkl, RandomForest.pkl
 root - INFO - 
-        Testing test_train_models: 
-        images results were created in ./images/results/. 
-        classification_report_logistic_regression.png, classification_report_random_forest.png
+        Testing test_train_models:
+        images results were created in ./images/results/.
+        classification_report_random_forest.png, classification_report_logistic_regression.png
 root - INFO - Testing train_models: SUCCESS
 root - INFO - Testing train_models: END
 root - INFO - Testing feature_importance_plot: START
