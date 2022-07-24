@@ -12,6 +12,13 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+import shap
+from sklearn.metrics import RocCurveDisplay, classification_report
+import joblib
+
 from constants import (
     PLOTS_STYLE, 
     DATA_FILE,
@@ -22,7 +29,10 @@ from constants import (
     COLOR_PALLETTE,
     FIGURE_SIZE_TUPLE,
     CATEGORICAL_FEATURES,
-    PROCESSED_FEATURES)
+    PROCESSED_FEATURES,
+    MODEL_STORE_PATH,
+    RESULTS_IMAGES_PATH,
+    NAME_FEATURE_IMPORTANCE_PLOT)
 
 # Script configuration
 mpl.style.use([PLOTS_STYLE])
@@ -58,9 +68,6 @@ def perform_eda(df):
     ----------
         df: (pandas.dataframe)
     """
-    # Setup constant
-    
-
     # Get counts per label in churn and marital status
     df_churn = df.Churn.map(LABEL_DICT).value_counts()
     df_marital_status = df.Marital_Status.value_counts()
@@ -83,6 +90,7 @@ def perform_eda(df):
             colors=COLOR_PALLETTE)
         plt.suptitle(feature.replace('_', ' ')+ ' Distribution')
         plt.savefig(EDA_IMAGES_PATH + feature + '_distribution.png')
+        plt.close()
 
     # Get histogram plot of age feature.
     fig  =  plt.figure(figsize= FIGURE_SIZE_TUPLE)
@@ -90,6 +98,7 @@ def perform_eda(df):
     plt.suptitle('Age Distribution.')
     plt.xlabel('Years')
     plt.savefig(EDA_IMAGES_PATH + 'age_distribution.png')
+    plt.close()
 
     # Get distribution plot of Total_Trans_Ct feature
     plt.figure(figsize= FIGURE_SIZE_TUPLE) 
@@ -99,11 +108,13 @@ def perform_eda(df):
         kde=True,
         color= COLOR_PALLETTE[-1])
     plt.savefig(EDA_IMAGES_PATH + 'total_trans_ct.png')
+    plt.close()
 
     # Get pairwise correlation plot.
     plt.figure(figsize= FIGURE_SIZE_TUPLE) 
     sns.heatmap(df.corr(), annot=False, linewidths = 2)
     plt.savefig(EDA_IMAGES_PATH + 'correlation_matrix.png')
+    plt.close()
 
 
 
@@ -132,10 +143,10 @@ def perform_feature_engineering(df):
         df: pandas dataframe
     Returns
     ----------
-        X_train: (pandas.series) train features
-        X_test:  (pandas.series) train features
-        y_train:  (pandas.series) train target
-        y_test:  (pandas.series) train target
+    X_train: (pandas.series) train features
+    X_test:  (pandas.series) train features
+    y_train:  (pandas.series) train target
+    y_test:  (pandas.series) train target
     """
     X = df[PROCESSED_FEATURES]
     y = df['Churn']
@@ -143,52 +154,79 @@ def perform_feature_engineering(df):
     return X_train, X_test, y_train, y_test
 
 
-
-def classification_report_image(y_train,
-                                y_test,
-                                y_train_preds_lr,
-                                y_train_preds_rf,
-                                y_test_preds_lr,
-                                y_test_preds_rf):
-    '''
-    produces classification report for training and testing results and stores report as image
-    in images folder
-    input:
-            y_train: training response values
-            y_test:  test response values
-            y_train_preds_lr: training predictions from logistic regression
-            y_train_preds_rf: training predictions from random forest
-            y_test_preds_lr: test predictions from logistic regression
-            y_test_preds_rf: test predictions from random forest
-
-    output:
-             None
-    '''
-    pass
-
-
-def feature_importance_plot(model, X_data, output_pth):
-    '''
-    creates and stores the feature importances in pth
-    input:
-            model: model object containing feature_importances_
-            X_data: pandas dataframe of X values
-            output_pth: path to store the figure
-
-    output:
-             None
-    '''
-    pass
-
 def train_models(X_train, X_test, y_train, y_test):
-    '''
-    train, store model results: images + scores, and store models
-    input:
-              X_train: X training data
-              X_test: X testing data
-              y_train: y training data
-              y_test: y testing data
-    output:
-              None
-    '''
-    pass
+    """
+    train and store RandomForestClassifier and LogisticRegression models.
+    RandomForestClassifier is optimized wirh GridSearch and Crossvalidation.
+    LogisticRegression serves as baseline. Store roc curves.
+    Parameters
+    ----------
+        X_train: (pandas.series) features training.
+        y_train: (pandas.series) target training.
+    """
+    random_forest_base = RandomForestClassifier(random_state=42)
+    logistic_regression = LogisticRegression(solver='lbfgs', max_iter=100)
+    parameter_grid_dictionary = { 
+        'n_estimators': [200, 500],
+#        'max_features': ['auto', 'sqrt'],
+        'max_depth' : [4,5,100],
+#        'criterion' :['gini', 'entropy']
+    }
+    grid_search_random_forest = GridSearchCV(
+                            estimator= random_forest_base, 
+                            param_grid= parameter_grid_dictionary,
+                            cv= 2)
+    grid_search_random_forest.fit(X_train, y_train)
+
+    random_forest = grid_search_random_forest.best_estimator_
+    logistic_regression.fit(X_train, y_train)
+    
+    joblib.dump(random_forest,
+        MODEL_STORE_PATH + 'RandomForest.pkl')
+
+    joblib.dump(logistic_regression,
+        MODEL_STORE_PATH + 'LogisticRegression.pkl')
+
+    for model_name in ['Random Forest', 'Logistic Regression']:
+        model_name_prepared = model_name.lower().replace(' ', '_')
+        fig  =  plt.figure(figsize= FIGURE_SIZE_TUPLE)
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+        font_dictionary = {'fontsize': 10, 'fontproperties':'monospace' }
+        ax1.text(0.0, 1.0, 
+            model_name+ ' Train', fontdict= font_dictionary)
+        ax1.text(0.01, 0.7, 
+            str(classification_report(y_train, eval(model_name_prepared+'.predict(X_train)'))),
+            fontdict= font_dictionary)
+        ax1.text(0.0, 0.6, 
+            model_name+ ' Test',
+            fontdict= font_dictionary)
+        ax1.text(0.01, 0.3, 
+            str(classification_report(y_test, eval(model_name_prepared+'.predict(X_test)'))),
+            fontdict= font_dictionary)
+        ax1.axis('off')
+        RocCurveDisplay.from_estimator(eval(model_name_prepared), X_test, y_test, ax= ax2)
+        plt.savefig(RESULTS_IMAGES_PATH+ f'classification_report_{model_name_prepared}.png')
+        plt.close()
+
+def feature_importance_plot(df, model_tree, path_to_store):
+    """
+    Used game theory from shap value to determine feature importance of
+    input data.
+    Parameters
+    ----------
+        df: (pandas.series) features.
+        path_to_store: (str) where to store feature importance image
+        model_tree: tree based estimator.
+    """
+    explainer = shap.TreeExplainer(model_tree)
+    shap_values = explainer.shap_values(df)
+    shap.summary_plot(shap_values, 
+                    df, 
+                    plot_type="bar", 
+                    plot_size= FIGURE_SIZE_TUPLE,
+                    show=False,
+                    class_names= LABEL_DICT, 
+                    axis_color='#FFFFFF' )
+    plt.savefig(path_to_store+ NAME_FEATURE_IMPORTANCE_PLOT)
+    plt.close()

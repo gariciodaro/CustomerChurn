@@ -12,6 +12,17 @@ DATA_FILE = './data/bank_data.csv'
 
 EDA_IMAGES_PATH = './images/eda/'
 
+RESULTS_IMAGES_PATH = './images/results/'
+
+NAME_FEATURE_IMPORTANCE_PLOT = 'feature_importance.png'
+
+EXPECTED_IMAGES_RESULST_SET = {
+                'classification_report_random_forest.png',
+                'classification_report_logistic_regression.png'}
+
+
+MODEL_STORE_PATH = './models/'
+
 LOG_FILE  = './logs/churn_library.log'
 
 
@@ -23,6 +34,10 @@ EXPECTED_IMAGES_EDA_SET = {
                 'age_distribution.png',
                 'total_trans_ct.png',
                 'correlation_matrix.png'}
+
+
+EXPECTED_MODELS_SET  = {'RandomForest.pkl', 'LogisticRegression.pkl'}
+
 COLOR_PALLETTE= sns.color_palette("Reds", 5)
 FIGURE_SIZE_TUPLE= (15, 7)
 
